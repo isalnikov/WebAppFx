@@ -56,7 +56,7 @@ public class MainApp extends Application {
         stage.setAlwaysOnTop(true);
         stage.initStyle(StageStyle.UNDECORATED);
         stage.centerOnScreen();
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/logo.jpg")));
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/logo.png")));
 
         try {
 
