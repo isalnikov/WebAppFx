@@ -1,5 +1,11 @@
 package ru.isalnikov.appfxclient;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.application.Platform;
@@ -17,6 +23,15 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import lombok.extern.log4j.Log4j2;
 import netscape.javascript.JSObject;
 import org.w3c.dom.Document;
@@ -30,7 +45,7 @@ public class MainApp extends Application {
 
     private WebEngine engine;
 
-    private String URL_BASE   = "https://www.google.ru/";
+    private String URL_BASE = "https://www.google.ru/";
     private String URL_LOGOUT = "https://www.google.ru/logout";
 
     @Override
@@ -42,6 +57,23 @@ public class MainApp extends Application {
         stage.initStyle(StageStyle.UNDECORATED);
         stage.centerOnScreen();
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/logo.jpg")));
+
+        try {
+
+            HostnameVerifier hostnameVerifier = (String hostname, SSLSession session) -> {
+                log.info(hostname);
+                log.info(session);
+                return true;
+            };
+
+            FileInputStream fis = new FileInputStream("/src/main/resources/cert/client_cert.p12");
+
+            HttpsURLConnection.setDefaultSSLSocketFactory(getFactory(fis, "pwZb9e3sGaz0rCibYkwxGVWeDAR7WSj", "client_cert"));
+            HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
+
+        } catch (GeneralSecurityException | FileNotFoundException e) {
+            log.error(e);
+        }
 
         WebView view = new WebView();
         Scene scene = new Scene(view);
@@ -110,6 +142,37 @@ public class MainApp extends Application {
      */
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private static SSLSocketFactory getFactory(InputStream is, String pKeyPassword, String certAlias) throws Exception {
+
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+        keyStore.load(is, pKeyPassword.toCharArray());
+        is.close();
+        keyManagerFactory.init(keyStore, pKeyPassword.toCharArray());
+
+        //Replace the original KeyManagers with the AliasForcingKeyManager
+        KeyManager[] kms = keyManagerFactory.getKeyManagers();
+        TrustManager[] trustAllCerts = new TrustManager[]{
+            new X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(kms, trustAllCerts, null);
+        return context.getSocketFactory();
     }
 
 }
