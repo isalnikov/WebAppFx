@@ -68,7 +68,7 @@ public class MainApp extends Application {
 
             FileInputStream fis = new FileInputStream("/src/main/resources/cert/client_cert.p12");
 
-            HttpsURLConnection.setDefaultSSLSocketFactory(getFactory(fis, "pwZb9e3sGaz0rCibYkwxGVWeDAR7WSj", "client_cert"));
+            HttpsURLConnection.setDefaultSSLSocketFactory(getFactory(fis, "DEcvsdf3Gaz0rCibYkwxGVWeDAR7WSj", "client_cert"));
             HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
 
         } catch (GeneralSecurityException | FileNotFoundException e) {
