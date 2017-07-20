@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" shutdownHook="disable">
+    <Properties>
+        <Property name="log-path">/var/log/jetty</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%-5level] [%-21t] [%X{id}] [%X{username}] %c{1}:%m%n" /> 
+        </Console>
+        <Console name="SlowConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%highlight{%d{HH:mm:ss} [%-5level] [%-21t] [%X{id}] [%X{username}] %logger{36}.%M() @%L - %msg%n}{FATAL=Blinking bright red, ERROR=red, WARN=red bold, INFO=blue, DEBUG=yellow, TRACE=Green}"/>
+        </Console>
+        <RollingFile name="RollingFile" fileName="${log-path}/info.log" immediateFlush="false" append="false" filePattern="${log-path}/-%d{yyyy-MM-dd}-%i.log.zip">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%-5level] [%-21t] [%X{id}] [%X{username}] %c{1} - %msg%n" />
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10 MB" />
+            </Policies>
+            <DefaultRolloverStrategy fileIndex = "min" max="10" compressionLevel = "5"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="org.springframework.web" level="INFO"/>
+        <Logger name="org.hibernate" level="INFO"/>
+        <Logger name="ru.stoloto.s3" level="DEBUG"/>
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+            <!--<AppenderRef ref="SlowConsole" />-->
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>
